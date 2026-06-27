@@ -17,86 +17,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   if (!isOpen) return null;
 
+  // Local Bypass for Custom Login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-
-      localStorage.setItem('sportiq_token', data.user.username);
-      onSuccess(data.user);
+    // Simulate network delay
+    setTimeout(() => {
+      localStorage.setItem('sportiq_token', username);
+      onSuccess({ username } as User);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
-  const handleQuickAdminLogin = async () => {
+  // Local Bypass for Admin Login
+  const handleQuickAdminLogin = () => {
     setError('');
     setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'admin', password: 'admin' })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('sportiq_token', data.user.username);
-        onSuccess(data.user);
-        onClose();
-      } else {
-        setError(data.error || 'Admin login failed');
-      }
-    } catch (err: any) {
-      setError('Could not connect to server');
-    } finally {
+    setTimeout(() => {
+      localStorage.setItem('sportiq_token', 'admin');
+      onSuccess({ username: 'admin' } as User);
+      onClose();
       setLoading(false);
-    }
+    }, 500);
   };
 
-  const handleQuickDemoVip = async () => {
+  // Local Bypass for VIP Login
+  const handleQuickDemoVip = () => {
     setError('');
     setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'vip_pro', password: 'vip' })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('sportiq_token', data.user.username);
-        onSuccess(data.user);
-        onClose();
-      }
-    } catch (err) {
-      setError('Connection error');
-    } finally {
+    setTimeout(() => {
+      localStorage.setItem('sportiq_token', 'vip_pro');
+      onSuccess({ username: 'vip_pro' } as User);
+      onClose();
       setLoading(false);
-    }
+    }, 500);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 shadow-2xl">
         
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-1 text-gray-500 hover:text-white rounded-lg transition-colors"
@@ -104,7 +67,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-blue-600/10 border border-blue-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
             <Lock className="w-6 h-6 text-blue-500" />
@@ -113,13 +75,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             {isLogin ? 'Sign Into SportIQ' : 'Create Account'}
           </h2>
           <p className="text-xs text-gray-400 mt-1">
-            {isLogin
-              ? 'Access world-class neural match quant prediction engine.'
-              : 'Register to unlock weekly USDT VIP subscription.'}
+            Access world-class neural match quant prediction engine.
           </p>
         </div>
 
-        {/* Error Notice */}
         {error && (
           <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3 text-red-400 text-xs">
             <ShieldAlert className="w-4 h-4 flex-shrink-0" />
@@ -127,7 +86,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
         )}
 
-        {/* Quick Demo Shortcuts */}
         <div className="mb-6 space-y-2">
           <label className="text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold block">
             ⚡ Quick Test Shortcuts
@@ -159,7 +117,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <div className="border-t border-white/10 w-full"></div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1.5">Username</label>
@@ -201,7 +158,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
         </form>
 
-        {/* Footer toggle */}
         <div className="mt-6 text-center">
           <button
             type="button"
