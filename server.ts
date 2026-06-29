@@ -100,7 +100,7 @@ async function startServer() {
 
   // CORS
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'https://zippy-sunflower-7b644b.netlify.app');
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') return res.sendStatus(200);
@@ -115,7 +115,6 @@ async function startServer() {
     return db.users.find((u: any) => u.username === username || u.id === username);
   };
 
-  // Auth: Login
   app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     const db = getDb();
@@ -124,7 +123,6 @@ async function startServer() {
     res.json({ user, token: user.username });
   });
 
-  // Auth: Register
   app.post('/api/auth/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password are required' });
@@ -138,14 +136,12 @@ async function startServer() {
     res.json({ user: newUser, token: newUser.username });
   });
 
-  // Auth: Me
   app.get('/api/auth/me', (req, res) => {
     const user = getUserFromReq(req);
     if (!user) return res.status(401).json({ error: 'Not authenticated' });
     res.json({ user });
   });
 
-  // Payment: Submit USDT proof
   app.post('/api/vip/submit', (req, res) => {
     const user = getUserFromReq(req);
     if (!user) return res.status(401).json({ error: 'Not authenticated' });
@@ -162,7 +158,6 @@ async function startServer() {
     res.status(404).json({ error: 'User not found' });
   });
 
-  // Admin: Get all users
   app.get('/api/admin/users', (req, res) => {
     const admin = getUserFromReq(req);
     if (!admin || admin.role !== 'admin') return res.status(403).json({ error: 'Admin required' });
@@ -170,7 +165,6 @@ async function startServer() {
     res.json({ users: db.users });
   });
 
-  // Admin: Approve / Revoke User VIP
   app.post('/api/admin/user/toggle-approve', (req, res) => {
     const admin = getUserFromReq(req);
     if (!admin || admin.role !== 'admin') return res.status(403).json({ error: 'Admin required' });
@@ -187,7 +181,6 @@ async function startServer() {
     res.json({ success: true, user: db.users[idx] });
   });
 
-  // Settings
   app.get('/api/settings', (req, res) => {
     const db = getDb();
     res.json({ settings: db.settings });
@@ -202,13 +195,11 @@ async function startServer() {
     res.json({ success: true, settings: db.settings });
   });
 
-  // Predictions: Get History
   app.get('/api/predictions', (req, res) => {
     const db = getDb();
     res.json({ predictions: db.predictions });
   });
 
-  // Predictions: AI Vision Predict
   app.post('/api/predict', async (req, res) => {
     const user = getUserFromReq(req);
     if (!user) return res.status(401).json({ error: 'Please log in to predict matches' });
@@ -238,7 +229,7 @@ User context notes & specific instructions: ${matchContextNotes || 'None provide
 CRITICAL COACHING MANDATE:
 1. Act as an authoritative, hyper-confident world-class tactical football quant coach. Do not use hesitant language like "might" or "maybe". Be definitive.
 2. Search the live web for the teams visible in this match photo. Check latest verified team news, key player injuries, suspensions, expected lineups, and trending press conference quotes.
-3. Factor any missing star players (e.g. injured strikers or key defenders) directly into your tactical breakdown and moneyline odds calculations.
+3. Factor any missing star players directly into your tactical breakdown and moneyline odds calculations.
 4. Return a strictly valid JSON response adhering exactly to the schema.`;
 
       const predictionSchema = {
@@ -328,7 +319,6 @@ CRITICAL COACHING MANDATE:
     }
   });
 
-  // Serve frontend in production
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
