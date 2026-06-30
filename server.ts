@@ -98,7 +98,6 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: '50mb' }));
 
-  // CORS
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -200,6 +199,7 @@ async function startServer() {
     res.json({ predictions: db.predictions });
   });
 
+  // Predictions: AI Vision Predict
   app.post('/api/predict', async (req, res) => {
     const user = getUserFromReq(req);
     if (!user) return res.status(401).json({ error: 'Please log in to predict matches' });
@@ -260,7 +260,7 @@ CRITICAL COACHING MANDATE:
         });
         if (response.text) parsed = JSON.parse(response.text.trim());
       } catch (primaryErr: any) {
-        console.warn('Primary Gemini call failed, trying fallback:', primaryErr.message);
+        console.warn('Primary Gemini call failed, trying fallback model:', primaryErr.message);
         try {
           const fallbackResp = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -269,36 +269,22 @@ CRITICAL COACHING MANDATE:
           });
           if (fallbackResp.text) parsed = JSON.parse(fallbackResp.text.trim());
         } catch (secondaryErr: any) {
-          console.warn('Secondary Gemini call also failed, using fallback engine');
-          const notesStr = matchContextNotes || '';
-          let homeTeam = 'Apex United', awayTeam = 'Challenger FC', comp = 'Elite Division';
-          const vsMatch = notesStr.match(/([A-Za-z0-9\s]+)(?:\s+vs\.?|\s+-\s+|\s+v\s+)([A-Za-z0-9\s]+)/i);
-          if (vsMatch) { homeTeam = vsMatch[1].trim(); awayTeam = vsMatch[2].trim(); }
-          const hProb = Math.floor(45 + Math.random() * 20);
-          const aProb = Math.floor(20 + Math.random() * 15);
-          const dProb = 100 - hProb - aProb;
-          const bttsP = Math.floor(62 + Math.random() * 25);
-          const overP = Math.floor(58 + Math.random() * 28);
-          const fav = hProb >= aProb ? homeTeam : awayTeam;
-          parsed = {
-            matchTitle: `${homeTeam} vs ${awayTeam}`, competition: comp, favorite: fav,
-            favoriteReason: `SportiQ Quant Matrix indicates ${fav} holds a decisive xG advantage.`,
-            moneyline: { homeWin: hProb, draw: dProb, awayWin: aProb },
-            btts: { prediction: bttsP > 50 ? 'Yes' : 'No', probability: bttsP },
-            overUnder: { line: '2.5 Goals', prediction: overP > 50 ? 'Over' : 'Under', probability: overP },
-            recommendedBet: `${fav} Moneyline OR Over 1.5 Goals (@ ${(1.45 + Math.random() * 0.65).toFixed(2)})`,
-            confidenceScore: Math.floor(84 + Math.random() * 11),
-            keyTacticalAnalysis: [
-              `High-line counter pressing by ${homeTeam} projected to force turnovers in the attacking third.`,
-              `Tactical matchups heavily favor the favorite's wide forwards in 1v1 isolation.`,
-              `Midfield pivot rotation confirms sustained 60%+ territorial dominance.`
-            ],
-            riskLevel: hProb > 55 ? 'Low' : 'Medium'
-          };
+          // Both Gemini calls failed (likely rate-limited). Return an honest error
+          // instead of generating a fake/randomized prediction.
+          console.error('Both Gemini calls failed:', secondaryErr.message);
+          return res.status(503).json({
+            error: 'AI ENGINE BUSY',
+            message: 'Our AI engine is currently at capacity. Please try again in a minute.'
+          });
         }
       }
 
-      if (!parsed) throw new Error('Could not generate tactical prediction.');
+      if (!parsed) {
+        return res.status(503).json({
+          error: 'AI ENGINE BUSY',
+          message: 'Our AI engine could not generate a prediction. Please try again shortly.'
+        });
+      }
 
       const newPrediction = {
         id: `pred-${Date.now()}`,
